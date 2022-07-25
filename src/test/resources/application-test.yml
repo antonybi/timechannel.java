@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: test-service
+
+guid:
+  authDuration: 1s # 每次申请授权续期的时长，范围在1s到30m
