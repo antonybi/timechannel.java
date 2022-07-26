@@ -1,4 +1,4 @@
-package com.github.antonybi.timingbrick;
+package com.github.antonybi.timingwall;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -13,7 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 /**
- * 基于timed brick算法生成GUID
+ * 基于timing wall算法生成GUID
  *
  * @author antonybi
  * @since 2021-07-15
@@ -29,7 +29,7 @@ public class GuidGenerator {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyMMdd");
 
     @Resource
-    private TimingBrickHandler timingBrickHandler;
+    private TimingWallHandler timingWallHandler;
 
     /**
      * 生成新的guid，此方法会阻塞直到获取成功
@@ -38,13 +38,13 @@ public class GuidGenerator {
      */
     public long nextId() {
         return next(() -> {
-            long sequence = timingBrickHandler.fetch();
-            long guid = (timingBrickHandler.getLastTimeSlice() << 25)
+            long sequence = timingWallHandler.fetch();
+            long guid = (timingWallHandler.getLastTimeSlice() << 25)
                     + (sequence << 14)
-                    + timingBrickHandler.getBrickCourse();
+                    + timingWallHandler.getChannel();
 
-            log.trace("lastTimeSlice: {}, sequence: {}, brick: {}, guid: {}",
-                    timingBrickHandler.getLastTimeSlice(), sequence, timingBrickHandler.getBrickCourse(), guid);
+            log.trace("lastTimeSlice: {}, sequence: {}, block: {}, guid: {}",
+                    timingWallHandler.getLastTimeSlice(), sequence, timingWallHandler.getChannel(), guid);
             return guid;
         });
     }

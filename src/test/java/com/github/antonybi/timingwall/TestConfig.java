@@ -1,13 +1,12 @@
-package com.github.antonybi.timingbrick;
+package com.github.antonybi.timingwall;
 
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.test.context.ActiveProfiles;
 
 /**
  * @author antony
  */
 @TestConfiguration
-@ComponentScan({"com.github.antonybi.timingbrick"})
+@ComponentScan({"com.github.antonybi.timingwall"})
 public class TestConfig {
 }

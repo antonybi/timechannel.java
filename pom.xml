@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.antonybi</groupId>
-    <artifactId>timingbrick</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <artifactId>timingwall</artifactId>
+    <version>1.0.0</version>
 
     <properties>
         <java.version>8</java.version>

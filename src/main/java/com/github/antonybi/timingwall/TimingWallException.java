@@ -1,4 +1,4 @@
-package com.github.antonybi.timingbrick;
+package com.github.antonybi.timingwall;
 
 
 import lombok.Getter;
@@ -10,16 +10,16 @@ import lombok.Getter;
  * @since 2021-07-15
  **/
 @Getter
-public class TimingBrickException extends RuntimeException {
+public class TimingWallException extends RuntimeException {
 
     private final String message;
 
-    public TimingBrickException(String message) {
+    public TimingWallException(String message) {
         super(message);
         this.message = message;
     }
 
-    public TimingBrickException(String message, Throwable cause) {
+    public TimingWallException(String message, Throwable cause) {
         super(message, cause);
         this.message = message;
     }
