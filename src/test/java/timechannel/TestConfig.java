@@ -1,12 +1,13 @@
-package com.github.antonybi.timingwall;
+package timechannel;
 
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
 /**
- * @author antony
+ * @author antonybi
+ * @date 2022/08/18
  */
 @TestConfiguration
-@ComponentScan({"com.github.antonybi.timingwall"})
+@ComponentScan({"timechannel"})
 public class TestConfig {
 }

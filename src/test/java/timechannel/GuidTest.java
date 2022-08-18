@@ -1,4 +1,4 @@
-package com.github.antonybi.timingwall;
+package timechannel;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -11,27 +11,29 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * @author antony
+ * @author antonybi
+ * @date 2022/08/18
  */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = {GuidGenerator.class})
+@SpringBootTest(classes = {Guid.class})
 @TestPropertySource("classpath:application-test.yml")
 @ContextConfiguration(classes = {TestConfig.class})
 @ActiveProfiles("test")
 @Slf4j
-class GuidGeneratorTest {
+class GuidTest {
 
     @Resource
-    private GuidGenerator guidGenerator;
+    private Guid guid;
 
     @SneakyThrows
     @Test
@@ -52,12 +54,12 @@ class GuidGeneratorTest {
         t2.start();
         t3.start();
 
-        c.await(5, TimeUnit.MINUTES);
+        c.await(2, TimeUnit.MINUTES);
     }
 
     private void consumeGuid(Set<Long> rst, CountDownLatch c) {
-        for (int i = 0; i < 300000; i++) {
-            long id = guidGenerator.nextId();
+        for (int i = 0; i < 3000000; i++) {
+            long id = guid.nextId();
             assertFalse(rst.contains(id));
             rst.add(id);
         }
@@ -66,9 +68,11 @@ class GuidGeneratorTest {
 
     @Test
     void nextString() {
+        assertEquals(3 + 22, guid.nextString("TST").length());
     }
 
     @Test
     void parseDateTime() {
+        assertEquals(LocalDateTime.parse("2022-08-18T23:36:24.411"), guid.parseDateTime(3483027603532521472L));
     }
 }

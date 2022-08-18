@@ -3,4 +3,12 @@ spring:
     name: test-service
 
 guid:
-  authDuration: 1s # 每次申请授权续期的时长，范围在1s到30m
+  space: 0 # 当实例数接近频道总数，可以按业务场景划分到不同空间
+  ttl: 20s # 每次申请授权续期的时长，默认10m
+  renewInterval: 15s # 续期的间隔时间，该值必须小于ttl
+  bits:
+    channel: 11 # 11位频道，共2048个
+    sequence: 10 # 10位序列号，即1024/ms
+  redis:
+    host: 127.0.0.1
+    port: 6379
