@@ -89,12 +89,6 @@ public class Generator {
     private Duration ttl;
 
     /**
-     * 续期的间隔时间
-     */
-    @Value("${guid.renewInterval:10m}")
-    private Duration renewInterval;
-
-    /**
      * 请求的服务名称，仅用于日志
      */
     @Value("${spring.application.name:unknown}")
@@ -106,9 +100,6 @@ public class Generator {
     @PostConstruct
     public void init() {
         // 配置检查
-        if (renewInterval.compareTo(ttl) > 0) {
-            log.error("renewInterval should be less than ttl");
-        }
         if (channelBits + sequenceBits > 22) {
             log.error("channel & seq bits should be less than 22");
         }
@@ -125,13 +116,11 @@ public class Generator {
         Thread renewThread = new Thread(() -> {
             while (true) {
                 try {
-                    Thread.sleep(renewInterval.toMillis());
+                    allocator.renew(lease, ttl);
+
+                    Thread.sleep(ttl.toMillis() / 2);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                }
-
-                try {
-                    allocator.renew(lease, ttl);
                 } catch (Exception e) {
                     log.warn("renew lease failed, retry later", e);
                     try {
