@@ -36,9 +36,14 @@ public class Generator {
     private static final Lock LOCK = new ReentrantLock();
 
     /**
-     * 当遇到异常，均等待1ms再进行重试
+     * 出现一些非预期的异常，均等待5s再进行重试
      */
-    private static final long ERROR_WAIT = 1;
+    private static final long ERROR_WAIT = 5000L;
+
+    /**
+     * 当时间片消耗完，均等待5000ns再进行重试
+     */
+    private static final int EMPTY_WAIT = 5000;
 
     /**
      * 当前的租约
@@ -80,13 +85,13 @@ public class Generator {
     /**
      * 每次申请授权续期的时长，范围在1s到30m
      */
-    @Value("${guid.ttl:10m}")
+    @Value("${guid.ttl:12m}")
     private Duration ttl;
 
     /**
      * 续期的间隔时间
      */
-    @Value("${guid.renewInterval:9m}")
+    @Value("${guid.renewInterval:10m}")
     private Duration renewInterval;
 
     /**
@@ -112,15 +117,17 @@ public class Generator {
         Thread renewThread = new Thread(() -> {
             while (true) {
                 try {
-                    allocator.renew(lease, ttl);
-
-                    Thread.sleep(ttl.toMillis() - renewInterval.toMillis());
+                    Thread.sleep(renewInterval.toMillis());
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                }
+
+                try {
+                    allocator.renew(lease, ttl);
                 } catch (Exception e) {
                     log.warn("renew lease failed, retry later", e);
                     try {
-                        Thread.sleep(5000L);
+                        Thread.sleep(ERROR_WAIT);
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                     }
@@ -177,7 +184,8 @@ public class Generator {
         // 这里需要采用nanoTime单调时钟用于计时，避免本地时钟回拨的问题
         long localServerTime = (System.nanoTime() - localEffectiveTime) / 1000000 + lease.getEffectiveTime();
 
-        if (localServerTime < lease.getEffectiveTime() || localServerTime >= lease.getExpiryTime()) {
+        if (localServerTime >= lease.getExpiryTime()) {
+            // 租约已经过期，正常情况有续期异步线程，不应该出现此现象
             throw new TimeChannelInternalException(localServerTime + " isn't in lease: " + lease);
         }
 
@@ -192,7 +200,7 @@ public class Generator {
         // 时间片內序列号用尽
         if (counter >= maxCount) {
             try {
-                Thread.sleep(ERROR_WAIT);
+                Thread.sleep(0, EMPTY_WAIT);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

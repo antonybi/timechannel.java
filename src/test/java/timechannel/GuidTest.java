@@ -55,10 +55,11 @@ class GuidTest {
         t3.start();
 
         c.await(2, TimeUnit.MINUTES);
+        log.info("done!");
     }
 
     private void consumeGuid(Set<Long> rst, CountDownLatch c) {
-        for (int i = 0; i < 3000000; i++) {
+        for (int i = 0; i < 10000000; i++) {
             long id = guid.nextId();
             assertFalse(rst.contains(id));
             rst.add(id);
@@ -68,7 +69,7 @@ class GuidTest {
 
     @Test
     void nextString() {
-        assertEquals(3 + 22, guid.nextString("TST").length());
+        assertEquals(4 + 22, guid.nextString("TEST").length());
     }
 
     @Test
