@@ -105,6 +105,14 @@ public class Generator {
 
     @PostConstruct
     public void init() {
+        // 配置检查
+        if (renewInterval.compareTo(ttl) > 0) {
+            log.error("renewInterval should be less than ttl");
+        }
+        if (channelBits + sequenceBits > 22) {
+            log.error("channel & seq bits should be less than 22");
+        }
+
         // 修正本地时间与lease时间差值
         localEffectiveTime = System.nanoTime();
 

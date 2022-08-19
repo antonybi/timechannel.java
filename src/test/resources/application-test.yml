@@ -4,7 +4,7 @@ spring:
 
 guid:
   space: 0 # 当实例数接近频道总数，可以按业务场景划分到不同空间
-  ttl: 20s # 每次申请授权续期的时长，默认10m
+  ttl: 20s # 每次申请授权续期的时长，默认12m
   renewInterval: 15s # 续期的间隔时间，该值必须小于ttl
   bits:
     channel: 9 # 频道bit位数，默认11位共2048个
