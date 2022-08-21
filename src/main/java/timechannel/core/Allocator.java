@@ -1,4 +1,4 @@
-package timechannel;
+package timechannel.core;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import redis.clients.jedis.Jedis;
+import timechannel.exception.TimeChannelInternalException;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
@@ -27,12 +28,18 @@ public class Allocator {
     private Jedis jedis;
 
     /**
-     * lua脚本读取的byte数组
+     * 首次授权脚本
      */
     private byte[] grantScript;
 
+    /**
+     * 续期脚本
+     */
     private byte[] renewScript;
 
+    /**
+     * 空间，同一个空间內的channel和sequence bit分配必须保持一致
+     */
     @Value("${guid.space:0}")
     private String space;
 
@@ -73,7 +80,7 @@ public class Allocator {
      */
     public Lease grant(Duration ttl, String appName) {
         Lease lease = doGrant(ttl, appName);
-        log.info("grant a lease: {}", lease);
+        log.info("grant a new lease: {}", lease);
         return lease;
     }
 
@@ -86,7 +93,9 @@ public class Allocator {
         // lua脚本自带初始化，不会出现空返回
         List<Long> response = (List<Long>) result;
         Assert.notNull(response, "redis response is null");
-        if (!response.get(0).equals(1L)) {
+        if (response.get(0).equals(0L)) {
+            throw new TimeChannelInternalException("no idle channel: " + Arrays.toString(response.toArray()));
+        } else if (!response.get(0).equals(1L)) {
             throw new TimeChannelInternalException("grant lease failed: " + Arrays.toString(response.toArray()));
         }
 

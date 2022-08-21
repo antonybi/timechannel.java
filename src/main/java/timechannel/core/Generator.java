@@ -1,8 +1,9 @@
-package timechannel;
+package timechannel.core;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import timechannel.exception.TimeChannelInternalException;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -33,6 +34,9 @@ import java.util.function.Supplier;
 @Slf4j
 public class Generator {
 
+    /**
+     * id生成的锁，此处采用非公平锁以保证性能
+     */
     private static final Lock LOCK = new ReentrantLock();
 
     /**
@@ -41,9 +45,9 @@ public class Generator {
     private static final long ERROR_WAIT = 5000L;
 
     /**
-     * 当时间片消耗完，均等待5000ns再进行重试
+     * 当时间片消耗完，均等待10000ns再进行重试
      */
-    private static final int EMPTY_WAIT = 5000;
+    private static final int EMPTY_WAIT = 10000;
 
     /**
      * 当前的租约
@@ -83,9 +87,9 @@ public class Generator {
     private int sequenceBits;
 
     /**
-     * 每次申请授权续期的时长，范围在1s到30m
+     * 每次申请授权续期的时长
      */
-    @Value("${guid.ttl:12m}")
+    @Value("${guid.ttl:10m}")
     private Duration ttl;
 
     /**
@@ -118,6 +122,7 @@ public class Generator {
                 try {
                     allocator.renew(lease, ttl);
 
+                    // 这里需要提前更新，避免到期后更新的等待时间
                     Thread.sleep(ttl.toMillis() / 2);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
