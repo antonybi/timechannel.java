@@ -51,6 +51,11 @@ public class Generator {
     private static final int EMPTY_WAIT = 10000;
 
     /**
+     * 可自由分配的bit位数
+     */
+    private static final int CONFIGURABLE_BITS = 22;
+
+    /**
      * 当前的租约
      */
     private Lease lease;
@@ -58,7 +63,7 @@ public class Generator {
     /**
      * 当前时间片生成ID的计数器
      */
-    private int counter;
+    private int seq;
 
     /**
      * 本地生效的时间，采用单调时钟System.nanoTime()
@@ -68,12 +73,12 @@ public class Generator {
     /**
      * 上一次的时间片，用来判断是否跨时间片重新计数
      */
-    private long lastFetchTime;
+    private long lastTimeSlice;
 
     /**
      * 一个时间片中最多能产生的序号数量
      */
-    private int maxCount;
+    private int seqQuantity;
 
     /**
      * 分组编号
@@ -117,19 +122,18 @@ public class Generator {
     @PostConstruct
     public void init() {
         // 配置检查
-        if (groupBits + channelBits + sequenceBits > 22) {
-            throw new TimeChannelConfigException("groupBits+channelBits+sequenceBits should be less than 22");
+        if (groupBits + channelBits + sequenceBits > CONFIGURABLE_BITS) {
+            throw new TimeChannelConfigException("groupBits+channelBits+sequenceBits should be less than " + CONFIGURABLE_BITS);
         }
         int groupRange = (int) Math.pow(2, groupBits);
         if (groupId < 0 || groupId >= groupRange) {
-            throw new TimeChannelConfigException(
-                    String.format("group id %d should be in group range [0, %d)", groupId, groupRange));
+            throw new TimeChannelConfigException(String.format("group id %d should be in group range [0, %d)", groupId, groupRange));
         }
 
         // 修正本地时间与lease时间差值
         localEffectiveTime = System.nanoTime();
         // 每个时间片最大的seq数量
-        maxCount = (int) Math.pow(2, sequenceBits);
+        seqQuantity = (int) Math.pow(2, sequenceBits);
         // 最大的channel id
         int channelQuantity = (int) Math.pow(2, channelBits) - 1;
         // 初始化先申请占用一个channel
@@ -168,14 +172,13 @@ public class Generator {
         return next(() -> {
             // 按规则拼接bits
             long sequence = fetchSequence();
-            long timeSlice = lastFetchTime;
-            long guid = (timeSlice << (groupBits + channelBits + sequenceBits))
+            long guid = (lastTimeSlice << (groupBits + channelBits + sequenceBits))
                     + (groupId << (channelBits + sequenceBits))
                     + (lease.getChannel() << sequenceBits)
                     + sequence;
 
             log.debug("timeSlice: {}, groupId: {}, sequence: {}, lease: {}, guid: {}",
-                    timeSlice, groupId, sequence, lease.getChannel(), guid);
+                    lastTimeSlice, groupId, sequence, lease.getChannel(), guid);
             return guid;
         });
     }
@@ -213,15 +216,15 @@ public class Generator {
         }
 
         // 时间片过期
-        if (localServerTime > lastFetchTime) {
-            log.debug("last time slice timeout: {}", lastFetchTime);
-            lastFetchTime = localServerTime;
-            counter = 0;
-            return counter++;
+        if (localServerTime > lastTimeSlice) {
+            log.debug("last time slice timeout: {}", lastTimeSlice);
+            lastTimeSlice = localServerTime;
+            seq = 0;
+            return seq++;
         }
 
         // 时间片內序列号用尽
-        if (counter >= maxCount) {
+        if (seq >= seqQuantity) {
             try {
                 Thread.sleep(0, EMPTY_WAIT);
             } catch (InterruptedException e) {
@@ -231,7 +234,7 @@ public class Generator {
             return fetchSequence();
         }
 
-        return counter++;
+        return seq++;
     }
 
     public LocalDateTime parseDateTime(long guid) {
