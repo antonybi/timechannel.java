@@ -49,7 +49,7 @@
 
 ```
 <dependency>
-    <groupId>timechannel</groupId>
+    <groupId>io.github.antonybi</groupId>
     <artifactId>timechannel</artifactId>
     <version>1.0.0</version>
 </dependency>
