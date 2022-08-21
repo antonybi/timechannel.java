@@ -3,6 +3,7 @@ package timechannel.core;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import timechannel.exception.TimeChannelConfigException;
 import timechannel.exception.TimeChannelInternalException;
 
 import javax.annotation.PostConstruct;
@@ -75,6 +76,18 @@ public class Generator {
     private int maxCount;
 
     /**
+     * 分组编号
+     */
+    @Value("${guid.group.id:0}")
+    private long groupId;
+
+    /**
+     * 频道分组的bit位数
+     */
+    @Value("${guid.bits.group:0}")
+    private int groupBits;
+
+    /**
      * 频道的bit位数
      */
     @Value("${guid.bits.channel:11}")
@@ -104,22 +117,29 @@ public class Generator {
     @PostConstruct
     public void init() {
         // 配置检查
-        if (channelBits + sequenceBits > 22) {
-            log.error("channel & seq bits should be less than 22");
+        if (groupBits + channelBits + sequenceBits > 22) {
+            throw new TimeChannelConfigException("groupBits+channelBits+sequenceBits should be less than 22");
+        }
+        int groupRange = (int) Math.pow(2, groupBits);
+        if (groupId < 0 || groupId >= groupRange) {
+            throw new TimeChannelConfigException(
+                    String.format("group id %d should be in group range [0, %d)", groupId, groupRange));
         }
 
         // 修正本地时间与lease时间差值
         localEffectiveTime = System.nanoTime();
-
         // 每个时间片最大的seq数量
         maxCount = (int) Math.pow(2, sequenceBits);
-
-        lease = allocator.grant(ttl, appName);
+        // 最大的channel id
+        int channelQuantity = (int) Math.pow(2, channelBits) - 1;
+        // 初始化先申请占用一个channel
+        lease = allocator.grant(channelQuantity, ttl, appName);
 
         // 开启异步的续期线程
         Thread renewThread = new Thread(() -> {
             while (true) {
                 try {
+                    // 这里线程启动后立刻执行续期，是为了尽早暴露续期的异常
                     allocator.renew(lease, ttl);
 
                     // 这里需要提前更新，避免到期后更新的等待时间
@@ -149,12 +169,13 @@ public class Generator {
             // 按规则拼接bits
             long sequence = fetchSequence();
             long timeSlice = lastFetchTime;
-            long guid = (timeSlice << (channelBits + sequenceBits))
+            long guid = (timeSlice << (groupBits + channelBits + sequenceBits))
+                    + (groupId << (channelBits + sequenceBits))
                     + (lease.getChannel() << sequenceBits)
                     + sequence;
 
-            log.debug("timeSlice: {}, sequence: {}, lease: {}, guid: {}",
-                    timeSlice, sequence, lease.getChannel(), guid);
+            log.debug("timeSlice: {}, groupId: {}, sequence: {}, lease: {}, guid: {}",
+                    timeSlice, groupId, sequence, lease.getChannel(), guid);
             return guid;
         });
     }

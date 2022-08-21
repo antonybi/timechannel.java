@@ -74,20 +74,23 @@ public class Allocator {
 
     /**
      * 申请一个新的租约
+     *
+     * @param channelQuantity 最大的频道号
      * @param ttl 租约时长
      * @param appName 申请的应用名，用于日志记录
      * @return 新的租约
      */
-    public Lease grant(Duration ttl, String appName) {
-        Lease lease = doGrant(ttl, appName);
+    public Lease grant(int channelQuantity, Duration ttl, String appName) {
+        Lease lease = doGrant(channelQuantity, ttl, appName);
         log.info("grant a new lease: {}", lease);
         return lease;
     }
 
-    private Lease doGrant(Duration ttl, String appName) {
+    private Lease doGrant(int channelQuantity, Duration ttl, String appName) {
         Object result = jedis.eval(grantScript,
                 0,
                 space.getBytes(StandardCharsets.UTF_8),
+                String.valueOf(channelQuantity).getBytes(StandardCharsets.UTF_8),
                 String.valueOf(ttl.toMillis()).getBytes(StandardCharsets.UTF_8),
                 ("[" + appName + "]" + ttl).getBytes(StandardCharsets.UTF_8));
         // lua脚本自带初始化，不会出现空返回
@@ -95,8 +98,6 @@ public class Allocator {
         Assert.notNull(response, "redis response is null");
         if (response.get(0).equals(0L)) {
             throw new TimeChannelInternalException("no idle channel: " + Arrays.toString(response.toArray()));
-        } else if (!response.get(0).equals(1L)) {
-            throw new TimeChannelInternalException("grant lease failed: " + Arrays.toString(response.toArray()));
         }
 
         return Lease.builder()
@@ -120,9 +121,6 @@ public class Allocator {
 
         List<Long> response = (List<Long>) result;
         Assert.notNull(response, "redis response is null");
-        if (!response.get(0).equals(1L)) {
-            throw new TimeChannelInternalException("renew lease failed: " + Arrays.toString(response.toArray()));
-        }
 
         lease.setExpiryTime(response.get(1));
         log.info("renew lease: {}", lease);
