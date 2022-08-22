@@ -7,7 +7,7 @@ import lombok.Getter;
  * 配置错误
  *
  * @author antonybi
- * @date 2022/08/21
+ * @since 2022/08/21
  **/
 @Getter
 public class TimeChannelConfigException extends RuntimeException {

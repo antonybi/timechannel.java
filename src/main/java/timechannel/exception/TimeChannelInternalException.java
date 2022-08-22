@@ -7,7 +7,7 @@ import lombok.Getter;
  * 处理异常，此类问题正常不应该会发生
  *
  * @author antonybi
- * @date 2022/08/18
+ * @since 2022/08/18
  **/
 @Getter
 public class TimeChannelInternalException extends RuntimeException {

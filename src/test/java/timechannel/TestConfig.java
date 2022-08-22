@@ -5,7 +5,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 /**
  * @author antonybi
- * @date 2022/08/18
+ * @since 2022/08/18
  */
 @TestConfiguration
 @ComponentScan({"timechannel"})

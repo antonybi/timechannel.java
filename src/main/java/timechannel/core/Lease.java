@@ -5,7 +5,7 @@ import lombok.*;
 /**
  * 频道的租约
  * @author antonybi
- * @date 2022/08/18
+ * @since 2022/08/18
  */
 @Data
 @Builder

@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * 分配器，用于申请和续期频道的租约
  * @author antonybi
- * @date 2022/08/18
+ * @since 2022/08/18
  */
 @Component
 @Slf4j

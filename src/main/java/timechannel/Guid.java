@@ -12,7 +12,7 @@ import java.time.format.DateTimeFormatter;
  * 基于time channel算法生成GUID
  *
  * @author antonybi
- * @date 2022/08/18
+ * @since 2022/08/18
  */
 @Slf4j
 @Component

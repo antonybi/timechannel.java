@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author antonybi
- * @date 2022/08/18
+ * @since 2022/08/18
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {Guid.class})
