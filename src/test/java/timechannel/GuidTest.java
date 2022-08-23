@@ -68,8 +68,8 @@ class GuidTest {
     }
 
     @Test
-    void nextString() {
-        assertEquals(4 + 22, guid.nextString("TEST").length());
+    void nextId2() {
+        assertEquals(4 + 22, guid.nextId("TEST").length());
     }
 
     @Test

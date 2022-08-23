@@ -6,7 +6,7 @@
 
     <groupId>io.github.antonybi</groupId>
     <artifactId>timechannel</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 
     <name>timechannel</name>
     <description>snowflake guid sdk</description>
@@ -34,7 +34,6 @@
         <java.version>8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-boot.version>2.3.12.RELEASE</spring-boot.version>
-        <spring-cloud.version>Hoxton.SR11</spring-cloud.version>
         <junit.version>5.6.2</junit.version>
     </properties>
 

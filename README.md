@@ -51,7 +51,7 @@
 <dependency>
     <groupId>io.github.antonybi</groupId>
     <artifactId>timechannel</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
@@ -66,7 +66,7 @@
 
 ```
     long msgId = guid.nextId();
-    String msgId = guid.nextString("MSG");
+    String msgId = guid.nextId("MSG");
 ```
 
 ### 配置介绍

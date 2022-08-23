@@ -210,11 +210,6 @@ public class Generator {
         // 这里需要采用nanoTime单调时钟用于计时，避免本地时钟回拨的问题
         long localServerTime = (System.nanoTime() - localEffectiveTime) / 1000000 + lease.getEffectiveTime();
 
-        if (localServerTime >= lease.getExpiryTime()) {
-            // 租约已经过期，正常情况有续期异步线程，不应该出现此现象
-            throw new TimeChannelInternalException(localServerTime + " isn't in lease: " + lease);
-        }
-
         // 时间片过期
         if (localServerTime > lastTimeSlice) {
             log.debug("last time slice timeout: {}", lastTimeSlice);

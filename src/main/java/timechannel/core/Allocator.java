@@ -1,7 +1,7 @@
 package timechannel.core;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -9,8 +9,7 @@ import redis.clients.jedis.Jedis;
 import timechannel.exception.TimeChannelInternalException;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
-import java.net.URL;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
@@ -58,13 +57,13 @@ public class Allocator {
     }
 
     private byte[] readFile(String filePath) {
-        URL scriptUrl = this.getClass().getResource("/" + filePath);
-        if (scriptUrl == null) {
-            log.error("cannot find grant.lua");
+        InputStream inputStream = this.getClass().getResourceAsStream("/" + filePath);
+        if (inputStream == null) {
+            log.error("cannot find lua script");
             System.exit(0);
         }
         try {
-            return FileUtils.readFileToByteArray(new File(scriptUrl.toURI()));
+            return IOUtils.toByteArray(inputStream);
         } catch (Exception e) {
             log.error("cannot read " + filePath, e);
             System.exit(0);

@@ -39,7 +39,7 @@ public class Guid {
      * @param prefix guid业务前缀
      * @return guid字符串
      */
-    public String nextString(String prefix) {
+    public String nextId(String prefix) {
         long guid = nextId();
         LocalDateTime dateTime = parseDateTime(guid);
         return String.format("%s%s%016x", prefix.toUpperCase(), dateTime.format(DATE_TIME_FORMATTER), guid);
