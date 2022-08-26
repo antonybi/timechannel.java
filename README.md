@@ -43,30 +43,62 @@
 
 ### 项目集成
 
-本项目基于spring构建，按下列方式即可使用：
+本项目基于spring boot构建，按下列方式即可使用：
 
 #### 1\. 在pom中加入依赖
 
-```
+```xml
 <dependency>
     <groupId>io.github.antonybi</groupId>
     <artifactId>timechannel</artifactId>
     <version>1.1.0</version>
 </dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter</artifactId>
+    <version>2.6.2</version>
+</dependency>
+```
+
+#### 2\. 引用必要的配置
+```yaml
+spring:
+  application:
+    name: demo-service
+
+guid:
+  redis:
+    host: 127.0.0.1
+    port: 6379
 ```
 
 #### 2\. 代码中加入引用
 
+```java
+@SpringBootApplication(scanBasePackages = "timechannel")
+public class DemoApp {
+
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApp.class, args);
+    }
+
+}
 ```
+
+#### 3\. 在代码中使用
+
+```java
+@Service
+public class DemoService {
+
     @Resource
     private Guid guid;
-```
 
-#### 3\. 调用生成的方法
+    public long nextId() {
+        return guid.nextId();
+    }
 
-```
-    long msgId = guid.nextId();
-    String msgId = guid.nextId("MSG");
+}
 ```
 
 ### 配置介绍
@@ -166,3 +198,4 @@ Q2已经回答了需要一个存储模块来记录上一个应用消耗到什么
 
 1.  考虑到guid生成对系统运行至关重要，而本方案又强依赖Redis，故推荐Redis用sentinel模式部署集群，并且独占。
 2.  已有生产数据的情况下，轻易不要调整bits的分配，初始化的队列长度做动态调整可能会导致重复分配id。如需调整，建议等到所有channel均过期后，统一使用一个新的space，或者del原space的zset。
+3.  为了尽量保证系统的可用性，在极端情况下Redis集群不可访问，应用会认为一直占有lease继续工作，但此时需避免应用启停，需先恢复Redis集群。
