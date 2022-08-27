@@ -4,7 +4,7 @@
 
 目前分布式ID生成算法的主流依然是snowflake，比较知名的实现有twitter官方版本、sonyflake、美团Leaf。但snowflake在工程实现上，存在一些比较棘手的问题，如时钟回拨、位如何分配等。
 
-故个人重新设计了一个高可靠的`轻量级`实现，命名为`timechannel`，同时也避免了时钟回拨问题。在本地4C16G VM中压测，将序列号分配12bit，QPS压测结果达50w/s。
+故个人重新设计了一个高可靠的`轻量级`实现，命名为`timechannel`，同时也避免了时钟回拨问题、支持更灵活的位分配。在本地4C16G VM中压测，将序列号分配12bit，QPS压测结果达50w/s，可满足绝大多数应用场景。
 
 ## Comparison
 
@@ -17,46 +17,6 @@
 | 支持bit位分配配置 | 是   | 否   | 否   |
 | 时钟回拨问题 | 无   | 有   | 无   |
 | 潜在风险 | 运行时强依赖Redis | 时钟回拨会造成服务暂停 | 运行时强依赖Mysql |
-
-## Design
-
-### Design Thinking
-受snowflake算法的启发，我们把64个bit位拆分成两个部分，一个部分是时间，另外一个部分是序列号，这样就可以看成一个二维的空间。然后我们将序列号bit位再分成两个部分，前部是频道，后部是序号，那么每个频道都会包含一组私有的序号。这个结构就像是把时间轴线上有很多频道，所以命名为timechannel。
-
-![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/time-channel.svg)
-
-### bit位的划分
-
-默认划分如下：
-
-![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/bits-division.svg)
-
-项目中允许自由配置分段，在实现中增加了group的概念，但默认为0 bit。完整bit划分如下：
-
-`1-bit unused` \+ `42-bit timestamp` \+ `0-bit group` \+ `11-bit channel` \+ `12-bit sequence` = 64
-
-### Concept
-
-| 名词  | 中文  | 含义  | 用法  |
-| --- | --- | --- | --- |
-| space | 空间  | 同一空间内保持guid全局唯一 | 当实例数超过group+channel所承载的范围，可按场景划分空间，同时生成多组guid |
-| group | 组   | 将频道分成多个组 | 每个机房部署一个redis集群，每个集群一个group |
-| channel | 频道  | 实例的编号，与worker概念一致 | 每个实例会占用一个频道 |
-| lease | 租约  | 对一个频道占用时间的合约 | 实例启动时会占用一个频道，并不断进行续期 |
-
-### 算法的实现
-
-#### 租约的申请与续期
-
-为了保证guid生成的效率，项目中采用异步线程的提前续期，续期间隔为ttl的1/2
-
-![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/timechannel-generate.svg)
-
-#### guid的生成
-
-此项与大多数实现都相似，只是这里用了租约，简化了这部分的实现
-
-![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/timechannel-lease.svg)
 
 ## Quick Start
 
@@ -86,7 +46,7 @@ guid:
     port: 6379
 ```
 
-#### 2\. 代码中加入引用
+#### 2\. 启动类增加引用
 
 ```java
 @SpringBootApplication(scanBasePackages = "timechannel")
@@ -99,7 +59,7 @@ public class DemoApp {
 }
 ```
 
-#### 3\. 在代码中使用
+#### 3\. 代码中直接使用
 
 ```java
 @Service
@@ -114,6 +74,48 @@ public class DemoService {
 
 }
 ```
+
+## Design
+
+### Design Thinking
+受snowflake算法的启发，我们把64个bit位拆分成两个部分，一个部分是时间，另外一个部分是序列号，这样就可以看成一个二维的空间。
+然后我们将序列号bit位再分成两个部分，前部是频道，后部是序号，那么每个频道都会包含一组私有的序号。
+这个结构看起来就像是把时间轴线上有很多频道，每个guid就是一个平面上的点，所以按二维表命名为timechannel。
+
+![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/time-channel.svg)
+
+### Concept
+
+| 名词  | 中文  | 含义  | 用法  |
+| --- | --- | --- | --- |
+| space | 空间  | 同一空间内保持guid全局唯一 | 当实例数超过group+channel所承载的范围，可按场景划分空间，同时生成多组guid |
+| group | 组   | 将频道分成多个组 | 每个机房部署一个redis集群，每个集群一个group |
+| channel | 频道  | 实例的编号，与worker概念一致 | 每个实例会占用一个频道 |
+| lease | 租约  | 对一个频道占用时间的合约 | 实例启动时会占用一个频道，并不断进行续期 |
+
+### bit位的划分
+
+默认划分如下：
+
+![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/bits-division.svg)
+
+项目中允许自由配置分段，在实现中增加了group的概念，但默认为0 bit。完整bit划分如下：
+
+`1-bit unused` \+ `42-bit timestamp` \+ `0-bit group` \+ `11-bit channel` \+ `12-bit sequence` = 64
+
+### 算法的实现
+
+#### 租约的申请与续期
+
+为了保证guid生成的效率，项目中采用异步线程的提前续期，续期间隔为ttl的1/2
+
+![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/timechannel-generate.svg)
+
+#### guid的生成
+
+此项与大多数实现都相似，只是这里用了租约，简化了这部分的实现
+
+![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/timechannel-lease.svg)
 
 ### 配置介绍
 
@@ -134,7 +136,7 @@ public class DemoService {
 
 ### 运行检查
 
-```
+```shell
 # 查看channel的总数
 zcard space:0:expiryTime:channel
 
