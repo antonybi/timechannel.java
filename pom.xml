@@ -10,7 +10,7 @@
 
     <name>timechannel</name>
     <description>snowflake guid sdk</description>
-    <url>https://github.com/AntonyBi/timechannel.java</url>
+    <url>https://github.com/antonybi/timechannel.java</url>
     <licenses>
         <license>
             <name>MIT License</name>
@@ -20,13 +20,13 @@
     </licenses>
     <scm>
         <tag>master</tag>
-        <url>git@github.com:AntonyBi/timechannel.java.git</url>
-        <connection>scm:git@github.com:AntonyBi/timechannel.java.git</connection>
+        <url>git@github.com:antonybi/timechannel.java.git</url>
+        <connection>scm:git@github.com:antonybi/timechannel.java.git</connection>
     </scm>
     <developers>
         <developer>
             <name>Antony Bi</name>
-            <email>329937455@qq.com</email>
+            <email>passoverleo@gmail.com</email>
         </developer>
     </developers>
 
