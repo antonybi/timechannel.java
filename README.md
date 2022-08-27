@@ -6,8 +6,6 @@
 
 故个人重新设计了一个高可靠的`轻量级`实现，命名为`timechannel`，同时也避免了时钟回拨问题。在本地4C16G VM中压测，将序列号分配12bit，QPS压测结果达50w/s。
 
-具体设计文档见： [timechannel分布式GUID的设计](https://www.jianshu.com/p/f0e172c57c45)
-
 ## Comparison
 
 |     | timechannel | leaf snowflake | leaf segment |
@@ -25,9 +23,15 @@
 ### Design Thinking
 受snowflake算法的启发，我们把64个bit位拆分成两个部分，一个部分是时间，另外一个部分是序列号，这样就可以看成一个二维的空间。然后我们将序列号bit位再分成两个部分，前部是频道，后部是序号，那么每个频道都会包含一组私有的序号。这个结构就像是把时间轴线上有很多频道，所以命名为timechannel。
 
-![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/timechannel-generate.svg)
+![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/time-channel.svg)
 
-### 默认bit位的划分
+### bit位的划分
+
+默认划分如下：
+
+![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/bits-division.svg)
+
+项目中允许自由配置分段，在实现中增加了group的概念，但默认为0 bit。完整bit划分如下：
 
 `1-bit unused` \+ `42-bit timestamp` \+ `0-bit group` \+ `11-bit channel` \+ `12-bit sequence` = 64
 
@@ -40,6 +44,19 @@
 | channel | 频道  | 实例的编号，与worker概念一致 | 每个实例会占用一个频道 |
 | lease | 租约  | 对一个频道占用时间的合约 | 实例启动时会占用一个频道，并不断进行续期 |
 
+### 算法的实现
+
+#### 租约的申请与续期
+
+为了保证guid生成的效率，项目中采用异步线程的提前续期，续期间隔为ttl的1/2
+
+![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/timechannel-generate.svg)
+
+#### guid的生成
+
+此项与大多数实现都相似，只是这里用了租约，简化了这部分的实现
+
+![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/timechannel-lease.svg)
 
 ## Quick Start
 
