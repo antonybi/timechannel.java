@@ -8,7 +8,7 @@ local channelQuantity = tonumber(ARGV[2])
 local ttl = tonumber(ARGV[3])
 local appName = ARGV[4]
 
--- 获取过期时间最小的频道，则为当前应选取的频道
+-- 采用LRU策略，选取过期时间最早的频道
 local leaseValue = redis.call('zrange', 'space:' .. space .. ':expiryTime:channel', 0, 0, 'WITHSCORES')
 local channel = 0
 

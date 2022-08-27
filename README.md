@@ -4,7 +4,9 @@
 
 目前分布式ID生成算法的主流依然是snowflake，比较知名的实现有twitter官方版本、sonyflake、美团Leaf。但snowflake在工程实现上，存在一些比较棘手的问题，如时钟回拨、位如何分配等。
 
-故个人重新设计了一个高可靠的`轻量级`实现，命名为`timechannel`，同时也避免了时钟回拨问题。在本地4C16G VM中压测，将序列号分配12bit，QPS压测结果达50w/s。
+故个人重新设计了一个高可靠的`轻量级`实现，命名为`timechannel`，同时也避免了时钟回拨问题。在本地4C16G VM中压测，将序列号分配12bit，QPS压测结果达50w/s。
+
+具体设计文档见： [timechannel分布式GUID的设计](https://www.jianshu.com/p/f0e172c57c45)
 
 ## Comparison
 
@@ -20,10 +22,8 @@
 
 ## Design
 
-### Design Document
+### Design Thinking
 受snowflake算法的启发，我们把64个bit位拆分成两个部分，一个部分是时间，另外一个部分是序列号，这样就可以看成一个二维的空间。然后我们将序列号bit位再分成两个部分，前部是频道，后部是序号，那么每个频道都会包含一组私有的序号。这个结构就像是把时间轴线上有很多频道，所以命名为timechannel。
-
-具体设计文档见： [timechannel分布式GUID的设计](https://www.jianshu.com/p/f0e172c57c45)
 
 ### 默认bit位的划分
 
@@ -60,7 +60,7 @@
 </dependency>
 ```
 
-#### 2\. 引用必要的配置
+#### 2\. 在application.yml中编写必要的参数配置
 ```yaml
 spring:
   application:
@@ -198,4 +198,4 @@ Q2已经回答了需要一个存储模块来记录上一个应用消耗到什么
 
 1.  考虑到guid生成对系统运行至关重要，而本方案又强依赖Redis，故推荐Redis用sentinel模式部署集群，并且独占。
 2.  已有生产数据的情况下，轻易不要调整bits的分配，初始化的队列长度做动态调整可能会导致重复分配id。如需调整，建议等到所有channel均过期后，统一使用一个新的space，或者del原space的zset。
-3.  为了尽量保证系统的可用性，在极端情况下Redis集群不可访问，应用会认为一直占有lease继续工作，但此时需避免应用启停，需先恢复Redis集群。
+3.  为了尽量保证系统的可用性，在极端情况下Redis集群不可访问，SDK会认为一直占有channel继续工作，但此时需避免应用启停，先恢复Redis集群。但channel申请是依据LRU策略，也最大程度以免意外启停导致错误。
