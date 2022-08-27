@@ -10,6 +10,7 @@ import redis.clients.jedis.Jedis;
 import timechannel.exception.TimeChannelInternalException;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -60,13 +61,10 @@ public class Allocator {
 
     private byte[] readFile(String filePath) {
         InputStream inputStream = this.getClass().getResourceAsStream("/" + filePath);
-        if (inputStream == null) {
-            log.error("cannot find lua script");
-            System.exit(0);
-        }
+        Assert.notNull(inputStream, "cannot find lua script");
         try {
             return IOUtils.toByteArray(inputStream);
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.error("cannot read " + filePath, e);
             System.exit(0);
             return new byte[0];
@@ -101,7 +99,11 @@ public class Allocator {
             throw new TimeChannelInternalException("no idle channel: " + Arrays.toString(response.toArray()));
         }
 
-        return new Lease(response.get(1), response.get(2), response.get(3));
+        Lease lease = new Lease();
+        lease.setChannel(response.get(1));
+        lease.setEffectiveTime(response.get(2));
+        lease.setExpiryTime(response.get(3));
+        return lease;
     }
 
     /**

@@ -10,7 +10,7 @@ guid:
   bits:
     group: 1 # 频道分组bit位数，默认0
     channel: 8 # 频道bit位数，默认11位共2048个
-    sequence: 12 # 序列号bit位数，默认10位即1024/ms
+    sequence: 4 # 序列号bit位数，默认10位即1024/ms
   redis:
     host: 127.0.0.1
     port: 6379

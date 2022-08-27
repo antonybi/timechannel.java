@@ -244,7 +244,7 @@ public class Generator {
 
     public LocalDateTime parseDateTime(long guid) {
         return LocalDateTime.ofInstant(
-                Instant.ofEpochMilli(guid >> (channelBits + sequenceBits)),
+                Instant.ofEpochMilli(guid >> (groupId + channelBits + sequenceBits)),
                 TimeZone.getDefault().toZoneId());
     }
 

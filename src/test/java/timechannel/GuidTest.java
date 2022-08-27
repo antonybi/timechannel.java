@@ -35,20 +35,19 @@ class GuidTest {
     @Resource
     private Guid guid;
 
-    @Disabled("very slow")
+    @Disabled("调整sequence的配置，12bit可达到50w/s")
     @Test
     void benchmarkNextId() throws InterruptedException {
-        Set<Long> rst = Collections.synchronizedSet(new HashSet<>());
         CountDownLatch c = new CountDownLatch(3);
 
         Thread t1 = new Thread(() -> {
-            consumeGuid(rst, c);
+            consumeGuid(c);
         });
         Thread t2 = new Thread(() -> {
-            consumeGuid(rst, c);
+            consumeGuid(c);
         });
         Thread t3 = new Thread(() -> {
-            consumeGuid(rst, c);
+            consumeGuid(c);
         });
         t1.start();
         t2.start();
@@ -58,19 +57,26 @@ class GuidTest {
         log.info("done!");
     }
 
-    private void consumeGuid(Set<Long> rst, CountDownLatch c) {
+    private void consumeGuid(CountDownLatch c) {
         for (int i = 0; i < 10000000; i++) {
-            long id = guid.nextId();
-            assertFalse(rst.contains(id));
-            rst.add(id);
+            assertDoesNotThrow(() -> guid.nextId());
         }
         c.countDown();
     }
 
     @Test
     void nextId() {
-        assertTrue(guid.nextId() > 0);
-        assertTrue(guid.nextId() > 0);
+        Set<Long> rst = Collections.synchronizedSet(new HashSet<>());
+        long last = 0;
+
+        for (int i = 0; i < 100; i++) {
+            // 加速消耗直到一个时间片內序号都耗尽
+            long id = guid.nextId();
+            assertTrue(id > last);
+            assertFalse(rst.contains(id));
+            rst.add(id);
+            last = id;
+        }
     }
 
     @Test
@@ -80,7 +86,7 @@ class GuidTest {
 
     @Test
     void parseDateTime() {
-        assertEquals(LocalDateTime.parse("2075-04-23T11:50:00.727"), guid.parseDateTime(3484645589754769408L));
+        assertEquals(LocalDateTime.parse("2022-08-28T00:22:33.251"), guid.parseDateTime(13611969357836288L));
     }
 
 }

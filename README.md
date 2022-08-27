@@ -36,7 +36,7 @@
 <dependency>
     <groupId>io.github.antonybi</groupId>
     <artifactId>timechannel</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 ```
 
@@ -146,13 +146,16 @@ public class DemoService {
 # 查看channel的总数
 zcard space:0:expiryTime:channel
 
+# 查看channel的租约过期时间
+zscore space:0:expiryTime:channel 0
+
 # 查看目前可用的channel总数，时间戳换成当前时间
 zcount space:0:expiryTime:channel 0 1661079389000
 
 # 查看正在被占用的channel
 zrangebyscore space:0:expiryTime:channel 1661079389000 9999999999999 WITHSCORES
 
-# 根据上条命令查到的频道号查看最后一次申请日志
+# 根据上条命令查到的channel查看最后一次申请日志
 get space:0:channel:0:log
 ```
 

@@ -46,12 +46,6 @@ public class Lease {
         this.expiryTime = expiryTime;
     }
 
-    Lease(long channel, long effectiveTime, long expiryTime) {
-        this.channel = channel;
-        this.effectiveTime = effectiveTime;
-        this.expiryTime = expiryTime;
-    }
-
     @Override
     public String toString() {
         return "Lease{" +
