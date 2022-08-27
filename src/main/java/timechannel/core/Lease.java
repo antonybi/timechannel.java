@@ -1,17 +1,10 @@
 package timechannel.core;
 
-import lombok.*;
-
 /**
  * 频道的租约
  * @author antonybi
  * @since 2022/08/18
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@ToString
 public class Lease {
 
     /**
@@ -25,8 +18,47 @@ public class Lease {
     private long effectiveTime;
 
     /**
-     * 过期时间（注：这里虽然涉及多线程操作，但是逻辑上既做了提前更新，且含义上读取到旧值不会有任何问题，故没使用并发类）
+     * 过期时间
      */
     private long expiryTime;
+
+    long getChannel() {
+        return channel;
+    }
+
+    void setChannel(long channel) {
+        this.channel = channel;
+    }
+
+    long getEffectiveTime() {
+        return effectiveTime;
+    }
+
+    void setEffectiveTime(long effectiveTime) {
+        this.effectiveTime = effectiveTime;
+    }
+
+    long getExpiryTime() {
+        return expiryTime;
+    }
+
+    void setExpiryTime(long expiryTime) {
+        this.expiryTime = expiryTime;
+    }
+
+    Lease(long channel, long effectiveTime, long expiryTime) {
+        this.channel = channel;
+        this.effectiveTime = effectiveTime;
+        this.expiryTime = expiryTime;
+    }
+
+    @Override
+    public String toString() {
+        return "Lease{" +
+                "channel=" + channel +
+                ", effectiveTime=" + effectiveTime +
+                ", expiryTime=" + expiryTime +
+                '}';
+    }
 
 }

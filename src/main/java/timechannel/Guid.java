@@ -1,6 +1,5 @@
 package timechannel;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import timechannel.core.Generator;
 
@@ -14,7 +13,6 @@ import java.time.format.DateTimeFormatter;
  * @author antonybi
  * @since 2022/08/18
  */
-@Slf4j
 @Component
 public class Guid {
 

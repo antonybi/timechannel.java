@@ -1,10 +1,10 @@
 package timechannel.core;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import timechannel.exception.TimeChannelConfigException;
-import timechannel.exception.TimeChannelInternalException;
+import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -32,8 +32,9 @@ import java.util.function.Supplier;
  * @since 2022/08/18
  */
 @Component
-@Slf4j
 public class Generator {
+
+    private final Logger log = LoggerFactory.getLogger(Generator.class);
 
     /**
      * id生成的锁，此处采用非公平锁以保证性能
@@ -122,13 +123,12 @@ public class Generator {
     @PostConstruct
     public void init() {
         // 配置检查
-        if (groupBits + channelBits + sequenceBits > CONFIGURABLE_BITS) {
-            throw new TimeChannelConfigException("groupBits+channelBits+sequenceBits should be less than " + CONFIGURABLE_BITS);
-        }
+        Assert.isTrue(groupBits + channelBits + sequenceBits <= CONFIGURABLE_BITS,
+                "groupBits+channelBits+sequenceBits should be less than " + CONFIGURABLE_BITS);
+
         int groupRange = (int) Math.pow(2, groupBits);
-        if (groupId < 0 || groupId >= groupRange) {
-            throw new TimeChannelConfigException(String.format("group id %d should be in group range [0, %d)", groupId, groupRange));
-        }
+        Assert.isTrue(groupId >= 0 && groupId < groupRange,
+                String.format("group id %d should be in group range [0, %d)", groupId, groupRange));
 
         // 修正本地时间与lease时间差值
         localEffectiveTime = System.nanoTime();
@@ -140,27 +140,34 @@ public class Generator {
         lease = allocator.grant(channelQuantity, ttl, appName);
 
         // 开启异步的续期线程
-        Thread renewThread = new Thread(() -> {
-            while (true) {
-                try {
-                    // 这里线程启动后立刻执行续期，是为了尽早暴露续期的异常
-                    allocator.renew(lease, ttl);
+        Thread renewThread = new Thread(this::renewInLoop, "GUID Renew Thread");
+        renewThread.start();
+    }
 
-                    // 这里需要提前更新，避免到期后更新的等待时间
-                    Thread.sleep(ttl.toMillis() / 2);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                } catch (Exception e) {
+    private void renewInLoop() {
+        while (true) {
+            try {
+                // 这里线程启动后立刻执行续期，是为了尽早暴露续期的异常
+                allocator.renew(lease, ttl);
+
+                // 这里需要提前更新，避免到期后更新的等待时间
+                Thread.sleep(ttl.toMillis() / 2);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (Exception e) {
+                if (getLocalServerTime() >= lease.getExpiryTime()) {
+                    // 租约已经过期，正常情况有续期异步线程，不应该出现此现象
+                    log.error("lease has expired: {}", lease);
+                } else {
                     log.warn("renew lease failed, retry later", e);
-                    try {
-                        Thread.sleep(ERROR_WAIT);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                    }
+                }
+                try {
+                    Thread.sleep(ERROR_WAIT);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
                 }
             }
-        }, "GUID Renew Thread");
-        renewThread.start();
+        }
     }
 
     /**
@@ -195,7 +202,6 @@ public class Generator {
                     try {
                         Thread.sleep(ERROR_WAIT);
                     } catch (InterruptedException interruptedException) {
-                        log.info("interrupted", e);
                         Thread.currentThread().interrupt();
                     }
                 }
@@ -207,8 +213,7 @@ public class Generator {
     }
 
     private long fetchSequence() {
-        // 这里需要采用nanoTime单调时钟用于计时，避免本地时钟回拨的问题
-        long localServerTime = (System.nanoTime() - localEffectiveTime) / 1000000 + lease.getEffectiveTime();
+        long localServerTime = getLocalServerTime();
 
         // 时间片过期
         if (localServerTime > lastTimeSlice) {
@@ -230,6 +235,11 @@ public class Generator {
         }
 
         return seq++;
+    }
+
+    private long getLocalServerTime() {
+        // 这里需要采用nanoTime单调时钟用于计时，避免本地时钟回拨的问题
+        return (System.nanoTime() - localEffectiveTime) / 1000000 + lease.getEffectiveTime();
     }
 
     public LocalDateTime parseDateTime(long guid) {

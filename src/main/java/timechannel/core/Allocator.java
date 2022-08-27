@@ -1,7 +1,8 @@
 package timechannel.core;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -21,8 +22,9 @@ import java.util.List;
  * @since 2022/08/18
  */
 @Component
-@Slf4j
 public class Allocator {
+
+    private final Logger log = LoggerFactory.getLogger(Allocator.class);
 
     private Jedis jedis;
 
@@ -99,11 +101,7 @@ public class Allocator {
             throw new TimeChannelInternalException("no idle channel: " + Arrays.toString(response.toArray()));
         }
 
-        return Lease.builder()
-                .channel(response.get(1))
-                .effectiveTime(response.get(2))
-                .expiryTime(response.get(3))
-                .build();
+        return new Lease(response.get(1), response.get(2), response.get(3));
     }
 
     /**
