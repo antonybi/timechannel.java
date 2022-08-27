@@ -1,5 +1,12 @@
 # timechannel
 
+[![Build Status](https://app.travis-ci.com/antonybi/timechannel.java.svg?branch=master)](https://app.travis-ci.com/antonybi/timechannel.java)
+[![Coverage Status](https://coveralls.io/repos/github/antonybi/timechannel.java/badge.svg?branch=master)](https://coveralls.io/github/antonybi/timechannel.java?branch=master)
+[![Maven central](https://maven-badges.herokuapp.com/maven-central/io.github.antonybi/timechannel/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.antonybi/timechannel)
+[![GitHub release](https://img.shields.io/github/release/antonybi/timechannel.java.svg)](https://github.com/antonybi/timechannel.java/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+
+
 ## Introduction
 
 目前分布式ID生成算法的主流依然是snowflake，比较知名的实现有twitter官方版本、sonyflake、美团Leaf。但snowflake在工程实现上，存在一些比较棘手的问题，如时钟回拨、位如何分配等。
@@ -82,7 +89,7 @@ public class DemoService {
 然后我们将序列号bit位再分成两个部分，前部是频道，后部是序号，那么每个频道都会包含一组私有的序号。
 这个结构看起来就像是把时间轴线上有很多频道，每个guid就是一个平面上的点，所以按二维表命名为timechannel。
 
-![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/time-channel.svg)
+![image](https://github.com/antonybi/timechannel.java/blob/master/doc/time-channel.svg)
 
 ### Concept
 
@@ -97,7 +104,7 @@ public class DemoService {
 
 默认划分如下：
 
-![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/bits-division.svg)
+![image](https://github.com/antonybi/timechannel.java/blob/master/doc/bits-division.svg)
 
 项目中允许自由配置分段，在实现中增加了group的概念，但默认为0 bit。完整bit划分如下：
 
@@ -109,13 +116,13 @@ public class DemoService {
 
 为了保证guid生成的效率，项目中采用异步线程的提前续期，续期间隔为ttl的1/2
 
-![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/timechannel-generate.svg)
+![image](https://github.com/antonybi/timechannel.java/blob/master/doc/timechannel-generate.svg)
 
 #### guid的生成
 
 此项与大多数实现都相似，只是这里用了租约，简化了这部分的实现
 
-![image](https://github.com/AntonyBi/timechannel.java/blob/master/doc/timechannel-lease.svg)
+![image](https://github.com/antonybi/timechannel.java/blob/master/doc/timechannel-lease.svg)
 
 ### 配置介绍
 
@@ -218,4 +225,4 @@ Q2已经回答了需要一个存储模块来记录上一个应用消耗到什么
 
 ## License
 
-Released under the [MIT License](https://github.com/AntonyBi/timechannel.java/blob/master/LICENSE)
+Released under the [MIT License](https://github.com/antonybi/timechannel.java/blob/master/LICENSE)
