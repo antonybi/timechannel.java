@@ -81,7 +81,7 @@ public class Allocator {
      */
     public Lease grant(int channelQuantity, Duration ttl, String appName) {
         Lease lease = doGrant(channelQuantity, ttl, appName);
-        log.info("grant a new lease: {}", lease);
+        log.info("grant a new lease of channel {}", lease.getChannel());
         return lease;
     }
 
