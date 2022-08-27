@@ -3,7 +3,6 @@
 [![Build Status](https://app.travis-ci.com/antonybi/timechannel.java.svg?branch=master)](https://app.travis-ci.com/antonybi/timechannel.java)
 [![Coverage Status](https://coveralls.io/repos/github/antonybi/timechannel.java/badge.svg?branch=master)](https://coveralls.io/github/antonybi/timechannel.java?branch=master)
 [![Maven central](https://maven-badges.herokuapp.com/maven-central/io.github.antonybi/timechannel/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.antonybi/timechannel)
-[![GitHub release](https://img.shields.io/github/release/antonybi/timechannel.java.svg)](https://github.com/antonybi/timechannel.java/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 
