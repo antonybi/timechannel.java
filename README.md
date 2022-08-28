@@ -16,7 +16,7 @@
 
 |     | timechannel | leaf snowflake | leaf segment |
 | --- | --- | --- | --- |
-| 依赖组件 | SDK<br>Redis集群（推荐sentinel） | SDK<br>Leaf Server<br>Zookeeper集群 | SDK<br>Leaf Server<br>Mysql集群（半同步） |
+| 依赖组件 | SDK<br>Redis集群（推荐sentinel） | SDK<br>Zookeeper集群 | SDK<br>Leaf Server<br>Mysql集群（半同步） |
 | 实现复杂度 | 简单，不足500行源码 | 简单，依赖twitter snowflake的实现 | 相对复杂 |
 | 性能  | 高   | 高   | 中   |
 | 支持worker上限 | 无限，需配置多space | 1024 | 无限，配置不同应用 |
