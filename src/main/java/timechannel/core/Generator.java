@@ -69,7 +69,7 @@ public class Generator {
     /**
      * 本地生效的时间，采用单调时钟System.nanoTime()
      */
-    private long localEffectiveTime;
+    private long startMonoTime;
 
     /**
      * 上一次的时间片，用来判断是否跨时间片重新计数
@@ -131,7 +131,7 @@ public class Generator {
                 String.format("group id %d should be in group range [0, %d)", groupId, groupRange));
 
         // 修正本地时间与lease时间差值
-        localEffectiveTime = System.nanoTime();
+        startMonoTime = System.nanoTime();
         // 每个时间片最大的seq数量
         seqQuantity = (int) Math.pow(2, sequenceBits);
         // 最大的channel id
@@ -239,7 +239,7 @@ public class Generator {
 
     private long getLocalServerTime() {
         // 这里需要采用nanoTime单调时钟用于计时，避免本地时钟回拨的问题
-        return (System.nanoTime() - localEffectiveTime) / 1000000 + lease.getEffectiveTime();
+        return (System.nanoTime() - startMonoTime) / 1000000 + lease.getEffectiveTime();
     }
 
     public LocalDateTime parseDateTime(long guid) {
